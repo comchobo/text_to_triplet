@@ -4,11 +4,11 @@ import re
 from transformers import BigBirdForTokenClassification, DataCollatorForTokenClassification
 from datasets import Dataset
 import torch
-from tqdm import tqdm
 from torch.utils.data import DataLoader
 from transformers import logging
-from Filter_N_Translate.RulebasedPreprocessor import Preprocessor
+# from Filter_N_Translate.RulebasedPreprocessor import Preprocessor # deprecated
 
+# pre-process before tokenizing. Those characters are recognized as 'UNK'.
 class CustomBigBirdTokenizer(BigBirdTokenizerFast):
     def _encode_plus(self, text, **kwargs):
         text = re.sub('―', '-', text)
@@ -22,7 +22,9 @@ class CustomBigBirdTokenizer(BigBirdTokenizerFast):
 
 
 class DeepPreprocessorModule(BasicModule):
+
     def _deep_preprocess(self, text_list, batch_size):
+        from tqdm import tqdm
         self.model = BigBirdForTokenClassification.from_pretrained(self.model_path)
         if self.lang=='KOR':
             self.tokenizer = CustomBigBirdTokenizer.from_pretrained(self.tokenizer_path)
@@ -59,6 +61,7 @@ class DeepPreprocessorModule(BasicModule):
                 temp_attentions.append(batch['attention_mask'])
                 temp_ids.append(batch['input_ids'])
 
+        # labeled **words** are not tokens. so following operation will manage to match the gap
         padder_attentions = [torch.zeros(batch_size, 4096-x.shape[1]) for x in temp_attentions[:-1]]
         padder_attentions.append(torch.zeros(temp_attentions[-1].shape[0], 4096 - temp_attentions[-1].shape[1]))
         padded_attentions = [torch.cat((temp_attentions[idx].cpu(), padder_attentions[idx]), 1) for idx in
@@ -89,10 +92,10 @@ class DeepPreprocessorModule(BasicModule):
 
     from datasets import Dataset
     def deep_preprocess(self, concated_dataset : Dataset):
-        preprocessor = Preprocessor()
-        print('checking the errors')
-        concated_dataset = concated_dataset.filter(lambda row : preprocessor.check_error(row) == 0
-                                                   , num_proc=self.num_workers)
+        # preprocessor = Preprocessor()
+        # print('checking the errors')
+        # concated_dataset = concated_dataset.filter(lambda row : preprocessor.check_error(row) == 0
+        #                                            , num_proc=self.num_workers)
 
         preprocessed_text = self._deep_preprocess(concated_dataset['text'], batch_size=6)
         concated_dataset = concated_dataset.remove_columns(['text'])

@@ -5,7 +5,7 @@ from Filter_N_Translate.LanguageTranslator import LanguageTranslateModule
 from Filter_N_Translate.DuplicateNewsDetector import DuplicateNewsDetectorModule
 # from Filter_N_Translate.EntityLinkedLanguageTranslator import EntityLinkedLanguageTranslateModule
 
-import os, json, gc, sys, random
+import os, gc, sys, random
 import pandas as pd
 import torch
 from datasets import Dataset, load_dataset
@@ -80,14 +80,9 @@ def main(args, task_list):
     sys.path.append("/")
     device = torch.device("cuda")
 
-    year_range = args.year_range.split('-')
-    if year_range[0] == year_range[1]:
-        target_years = [year_range[0]]
-    else:
-        target_years = [str(x) for x in range(int(year_range[0]), int(year_range[1]))]
-
-    for target_year in target_years:
-        files_of_years = [f'{args.input_path}/{x}' for x in os.listdir(args.input_path) if x[:4] == target_year]
+    year_range = range(int(args.start_year), int(args.end_year))
+    for target_year in year_range:
+        files_of_years = [f'{args.input_path}/{x}' for x in os.listdir(args.input_path) if x[:4] == str(target_year)]
 
         if args.debug_mode:
             random.seed(111)
@@ -169,10 +164,12 @@ if __name__ == '__main__' :
     parser.add_argument('--input_path', default='./input')
     parser.add_argument('--output_path', default='./output')
 
-    parser.add_argument('--year_range',default='2017-2024')
+    parser.add_argument('--start_year',default='2017')
+    parser.add_argument('--end_year', default='2023')
     parser.add_argument('--debug_mode', default=False, help='This will set the dataset size and proc_num')
+    parser.add_argument('--test_mode', default=True, help='This will verify code-level errors')
     parser.add_argument('--lang_mode', default='KOR')
-    parser.add_argument('--tasks', nargs='+', help='List of tasks to run', required=True)
+    parser.add_argument('--tasks', nargs='*', help='List of tasks to run', default=['preprocess'])
 
     args = parser.parse_args()
     # args.task를 직접 정의할 수 있습니다. ['함수명1', '함수명2', ...]
