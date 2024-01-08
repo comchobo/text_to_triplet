@@ -1,13 +1,12 @@
 from .BasicModule import BasicModule
+from kiwipiepy import Kiwi
+
 
 class SentenceSplitterModule(BasicModule):
     def split_sentence(self, dup_erased_dataset):
         import time
         print('\nsentence splitting news...')
-        start_time = time.time()
-
         temp = []
-        from kiwipiepy import Kiwi
         kiwi = Kiwi()
 
         dup_erased_dataset = dup_erased_dataset.filter(lambda row: isinstance(row["text"], str) is True)

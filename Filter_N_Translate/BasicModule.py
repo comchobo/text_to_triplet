@@ -1,4 +1,6 @@
 import os
+from functools import wraps
+import timeit
 
 class BasicModule:
     def __init__(self, num_workers, model_path, tokenizer_path, lang_mode = 'ENG', check_time=True, save_results=True):
@@ -6,8 +8,10 @@ class BasicModule:
         self.model_path = model_path
         self.tokenizer_path = tokenizer_path
         self.lang = lang_mode
-        self.check_time=check_time
-        self.save_results=save_results
+        self.check_time = check_time
+        self.save_results = save_results
+        self.decorator = timeit
+
         if num_workers>2 : self.dataloader_workers=2
         else: self.dataloader_workers = 0
 
@@ -44,3 +48,11 @@ class BasicModule:
             enable_progress_bar()
 
         return dataset
+
+    def conditional_timeit(self, dec):
+        def decorator(func):
+            if not self.check_time:
+                return func
+            return dec(func)
+
+        return decorator

@@ -38,8 +38,6 @@ class NewsFilteringModule(BasicModule):
 
     from datasets import Dataset
     def deep_filter(self, concated_dataset : Dataset, filtering_thres = -0.4):
-        import time
-        start_time = time.time()
         idx_given_dataset = concated_dataset.add_column('index', [x for x in range(len(concated_dataset))])
         idx_given_dataset = idx_given_dataset.remove_columns('__index_level_0__')
         del concated_dataset

@@ -1,8 +1,14 @@
+from peft import PeftModel, PeftConfig
+from transformers import AutoModelForSeq2SeqLM
+from optimum.bettertransformer import BetterTransformer
+from transformers import AutoTokenizer, DataCollatorWithPadding
+from datasets import Dataset
+from torch.utils.data import DataLoader
+import torch
+from tqdm import tqdm
+
 class Summarize_peft():
     def __init__(self, num_workers, model_name):
-        from peft import PeftModel, PeftConfig
-        from transformers import AutoModelForSeq2SeqLM
-        from optimum.bettertransformer import BetterTransformer
         self.model_name = model_name
         self.config = PeftConfig.from_pretrained(model_name)
         model = AutoModelForSeq2SeqLM.from_pretrained(self.config.base_model_name_or_path)
@@ -23,12 +29,6 @@ class Summarize_peft():
         del self.model
 
     def summarize_batches(self, flatten_text, batch_size):
-        from transformers import AutoTokenizer, DataCollatorWithPadding
-        from datasets import Dataset
-        from torch.utils.data import DataLoader
-        import torch
-        from tqdm import tqdm
-        import time
         tokenizer = AutoTokenizer.from_pretrained('KETI-AIR/ke-t5-large')
         # collator = DataCollatorWithPadding(tokenizer, padding=True)
         res = []
@@ -55,9 +55,7 @@ class Summarize_peft():
         return res
 
     def summarize(self, concated_news, grouped_index_dict, save_results=True, check_time=True):
-        import time
         print('summarizing news...')
-        s = time.time()
 
         # summarize
         summarized = self.summarize_batches(concated_news['text'], batch_size=28)
@@ -67,8 +65,5 @@ class Summarize_peft():
             for key in grouped_index_dict.keys():
                 save_target = summaried_dataset.select(grouped_index_dict[key])
                 save_target.to_csv(f'{self.output_path}/{key}.csv')
-
-        if check_time==True:
-            print('time taken for summarizing news : ',time.time()-s)
 
         return summaried_dataset, grouped_index_dict

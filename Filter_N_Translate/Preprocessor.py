@@ -1,7 +1,13 @@
 from .BasicModule import BasicModule
 from transformers import BigBirdTokenizerFast
 import re
-
+from transformers import BigBirdForTokenClassification, DataCollatorForTokenClassification
+from datasets import Dataset
+import torch
+from tqdm import tqdm
+from torch.utils.data import DataLoader
+from transformers import logging
+from Filter_N_Translate.RulebasedPreprocessor import Preprocessor
 
 class CustomBigBirdTokenizer(BigBirdTokenizerFast):
     def _encode_plus(self, text, **kwargs):
@@ -17,8 +23,6 @@ class CustomBigBirdTokenizer(BigBirdTokenizerFast):
 
 class DeepPreprocessorModule(BasicModule):
     def _deep_preprocess(self, text_list, batch_size):
-        from transformers import BigBirdForTokenClassification, DataCollatorForTokenClassification
-        from datasets import Dataset
         self.model = BigBirdForTokenClassification.from_pretrained(self.model_path)
         if self.lang=='KOR':
             self.tokenizer = CustomBigBirdTokenizer.from_pretrained(self.tokenizer_path)
@@ -30,7 +34,6 @@ class DeepPreprocessorModule(BasicModule):
 
         dataset = Dataset.from_dict({'text':text_list})
         def tokenize_text(row):
-            from transformers import logging
             logging.set_verbosity_error()
             return self.tokenizer(row['text'], padding = 'longest', truncation=True, max_length=4096,
                                                 pad_to_multiple_of=1024)
@@ -40,9 +43,6 @@ class DeepPreprocessorModule(BasicModule):
         dataset_for_preprocess = dataset_for_preprocess.remove_columns(['text'])
 
         print('\n==Deep Preprocessing==')
-        import torch
-        from tqdm import tqdm
-        from torch.utils.data import DataLoader
         temp_labels = []
         temp_attentions=[]
         temp_ids = []
@@ -89,7 +89,6 @@ class DeepPreprocessorModule(BasicModule):
 
     from datasets import Dataset
     def deep_preprocess(self, concated_dataset : Dataset):
-        from Filter_N_Translate.RulebasedPreprocessor import Preprocessor
         preprocessor = Preprocessor()
         print('checking the errors')
         concated_dataset = concated_dataset.filter(lambda row : preprocessor.check_error(row) == 0

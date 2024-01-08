@@ -43,7 +43,6 @@ class LanguageTranslateModule(BasicModule):
 
     def deep_translate(self, sentence_split_dataset : Dataset, SPL=2, save_results=True, check_time=True):
         print('translating news...')
-        start_time = time.time()
         self.model.to(self.device)
         if SPL==1:
             from util.utils import flatten_and_batch_dict, return_batch_to_list

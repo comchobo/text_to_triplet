@@ -1,6 +1,12 @@
+from transformers import EncoderDecoderModel
+from transformers import AutoTokenizer, DataCollatorWithPadding
+from datasets import Dataset
+from torch.utils.data import DataLoader
+import torch
+from tqdm import tqdm
+
 class Summarize():
     def __init__(self, num_workers, model_name):
-        from transformers import EncoderDecoderModel
         self.model_name = model_name
         self.model = EncoderDecoderModel.from_pretrained(model_name)
         self.num_workers = num_workers
@@ -18,11 +24,6 @@ class Summarize():
         del self.model
 
     def summarize_batches(self, flatten_text, batch_size):
-        from transformers import AutoTokenizer, DataCollatorWithPadding
-        from datasets import Dataset
-        from torch.utils.data import DataLoader
-        import torch
-        from tqdm import tqdm
         import time
         tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         # collator = DataCollatorWithPadding(tokenizer, padding=True)
@@ -51,9 +52,7 @@ class Summarize():
         return res
 
     def summarize(self, concated_news, grouped_index_dict, save_results=True, check_time=True):
-        import time
         print('summarizing news...')
-        s = time.time()
 
         # summarize
         summarized = self.summarize_batches(concated_news['text'], batch_size=16)
@@ -63,8 +62,5 @@ class Summarize():
             for key in grouped_index_dict.keys():
                 save_target = summaried_dataset.select(grouped_index_dict[key])
                 save_target.to_csv(f'{self.output_path}/{key}.csv')
-
-        if check_time==True:
-            print('time taken for summarizing news : ',time.time()-s)
 
         return summaried_dataset, grouped_index_dict
